@@ -1,0 +1,14 @@
+artifact_uri: file:C:/Users/Dibya/Code Projects/EcoPrompt/mlruns/553191485744633658/a4ed7e77e9d3400d8e43c07efe1e0e51/artifacts
+end_time: 1783350199868
+entry_point_name: ''
+experiment_id: '553191485744633658'
+lifecycle_stage: active
+run_id: a4ed7e77e9d3400d8e43c07efe1e0e51
+run_name: llm_rewrite|gpt-3.5-turbo|summary_req
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1783350199720
+status: 3
+tags: []
+user_id: Dibya

@@ -1,0 +1,15 @@
+# Core
+openai>=1.40
+tiktoken>=0.7
+mlflow>=2.14
+pyyaml>=6.0
+
+# Analysis / plotting
+pandas>=2.0
+numpy>=1.26
+scipy>=1.11
+matplotlib>=3.8
+seaborn>=0.13
+
+# Tests
+pytest>=8.0

@@ -1,0 +1,98 @@
+# =============================================================================
+# EcoPrompt configuration
+# -----------------------------------------------------------------------------
+# IMPORTANT HONESTY NOTES (read these before quoting any number):
+#   * TOKEN counts are MEASURED exactly with tiktoken. They are ground truth.
+#   * PRICES are published by OpenAI but change often. Verify the numbers below
+#     against https://openai.com/api/pricing before reporting cost figures.
+#   * ENERGY is *modelled*, not measured. OpenAI does not disclose per-query Wh.
+#     The `effective_active_params` below are PUBLIC-DOMAIN ESTIMATES / educated
+#     guesses, NOT official figures. Treat absolute Wh as illustrative; treat the
+#     *relative* and *percentage* energy reductions as the real result, since
+#     those are dominated by the (exactly measured) token reduction.
+# =============================================================================
+
+# Tokeniser encoding used for fallback / default counting.
+default_encoding: o200k_base
+
+# --- Model registry --------------------------------------------------------
+# effective_active_params: assumed number of params active per forward pass.
+#   For dense models ~= total params. For MoE models ~= active experts only.
+#   THESE ARE ESTIMATES. Adjust to calibrate against any figures you trust.
+# price_in / price_out: USD per 1,000,000 tokens. VERIFY before use.
+# encoding: tiktoken encoding name for accurate token counts.
+models:
+  gpt-4o:
+    effective_active_params: 40.0e+9
+    price_in: 2.50
+    price_out: 10.00
+    encoding: o200k_base
+  gpt-4o-mini:
+    effective_active_params: 8.0e+9
+    price_in: 0.15
+    price_out: 0.60
+    encoding: o200k_base
+  gpt-4.1:
+    effective_active_params: 50.0e+9
+    price_in: 2.00
+    price_out: 8.00
+    encoding: o200k_base
+  gpt-4.1-mini:
+    effective_active_params: 10.0e+9
+    price_in: 0.40
+    price_out: 1.60
+    encoding: o200k_base
+  gpt-4.1-nano:
+    effective_active_params: 3.0e+9
+    price_in: 0.10
+    price_out: 0.40
+    encoding: o200k_base
+  gpt-3.5-turbo:
+    effective_active_params: 20.0e+9
+    price_in: 0.50
+    price_out: 1.50
+    encoding: cl100k_base
+
+# --- Energy model constants ------------------------------------------------
+# Physical, transparent FLOPs -> Joules model. See src/energy_model.py.
+# Defaults loosely reflect an NVIDIA H100-class accelerator. Tune freely.
+energy:
+  gpu_peak_flops: 9.89e+14        # dense BF16 FLOP/s (H100 SXM ~= 989 TFLOP/s)
+  gpu_power_watts: 700.0         # board power draw under load
+  prefill_mfu: 0.40              # model-FLOPs-utilisation while reading input
+  decode_mfu: 0.05               # MFU while generating output (memory-bound -> low)
+  pue: 1.20                      # datacentre Power Usage Effectiveness overhead
+  flops_per_token_per_param: 2.0 # 1 multiply + 1 add per weight, per token
+
+# --- Carbon (optional, for a "grams CO2e" headline) ------------------------
+# gCO2e per kWh of the electricity grid. ~400 world avg; ~480 BD; ~40 hydro.
+carbon:
+  grid_gco2e_per_kwh: 400.0
+
+# --- Optimisation techniques to benchmark ----------------------------------
+# Each is implemented in src/optimizer.py.
+techniques:
+  - baseline        # no change (control group)
+  - rule_based      # deterministic filler stripping, zero LLM cost
+  - llm_rewrite     # one-shot rewrite for brevity (uses optimizer_model)
+  - agentic         # tool-using loop: rewrite -> count -> self-check -> retry
+
+# Cheap "basic" model used to DO the optimising and the quality judging.
+optimizer_model: gpt-4o-mini
+judge_model: gpt-4o-mini
+
+# Models whose prompts we benchmark (the "downstream" models being compared).
+benchmark_models:
+  - gpt-4o
+  - gpt-4o-mini
+  - gpt-4.1-mini
+  - gpt-3.5-turbo
+
+# Assumed output length (tokens) the downstream model generates per task.
+# Output is held ~constant across techniques on purpose: prompt compression
+# changes INPUT tokens, not the length of the answer the user asked for.
+assumed_output_tokens: 450
+
+mlflow:
+  experiment_name: ecoprompt-prompt-efficiency
+  tracking_uri: ./mlruns      # local file store; run `mlflow ui` to view

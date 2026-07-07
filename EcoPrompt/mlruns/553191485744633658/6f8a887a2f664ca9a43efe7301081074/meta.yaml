@@ -1,0 +1,14 @@
+artifact_uri: file:C:/Users/Dibya/Code Projects/EcoPrompt/mlruns/553191485744633658/6f8a887a2f664ca9a43efe7301081074/artifacts
+end_time: 1783350210811
+entry_point_name: ''
+experiment_id: '553191485744633658'
+lifecycle_stage: active
+run_id: 6f8a887a2f664ca9a43efe7301081074
+run_name: agentic|gpt-4o|fewshot_sentiment
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1783350210658
+status: 3
+tags: []
+user_id: Dibya
