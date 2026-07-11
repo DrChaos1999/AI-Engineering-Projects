@@ -1,0 +1,60 @@
+analyze_requirements:
+  description: >
+    Analyze the following proposed AI engineering project.
+
+    PROJECT IDEA:
+    {project_idea}
+
+    DEVELOPER'S CURRENT SKILLS:
+    {current_skills}
+
+    AVAILABLE TIME:
+    {time_budget}
+
+    Convert the idea into a realistic project specification. Identify:
+    1. A professional project title
+    2. The concrete problem being solved
+    3. The target users
+    4. Three to six prioritized core features
+    5. Required data inputs
+    6. Important technical or product constraints
+    7. At least two measurable success criteria
+
+    Keep the scope realistic for one developer. Distinguish essential features
+    from improvements that can be added later. Do not introduce a technology
+    unless it solves a clear project requirement.
+  expected_output: >
+    A complete ProjectRequirements object containing the project title,
+    problem statement, target users, prioritized features, data inputs,
+    constraints, and measurable success metrics.
+  agent: requirements_analyst
+
+design_project:
+  description: >
+    Use the structured ProjectRequirements produced by the previous task.
+
+    Design an end-to-end implementation plan that can be completed within:
+    {time_budget}
+
+    The developer currently knows:
+    {current_skills}
+
+    Produce:
+    1. A concise project summary
+    2. A simple end-to-end architecture with component responsibilities
+    3. The request and data flow
+    4. Recommended API endpoints where appropriate
+    5. A realistic technology stack
+    6. At least three weekly implementation milestones
+    7. A testing and evaluation strategy
+    8. Major risks
+    9. GitHub repository deliverables
+    10. One strong, truthful résumé bullet
+
+    Prefer technologies the developer already knows unless a new technology
+    provides clear engineering or portfolio value. Avoid unnecessary
+    microservices, excessive agents, and distributed infrastructure.
+  expected_output: >
+    A complete ProjectPlan object that a developer can follow directly to
+    build, test, document, and publish the project.
+  agent: solution_architect

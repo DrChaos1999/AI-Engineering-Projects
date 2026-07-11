@@ -1,0 +1,20 @@
+.env.example
+.gitignore
+README.md
+output/
+    .gitkeep
+pyproject.toml
+requirements.txt
+src/
+    ai_project_planner/
+        __init__.py
+        config/
+            agents.yaml
+            tasks.yaml
+        crew.py
+        main.py
+        schemas.py
+        tools/
+            __init__.py
+tests/
+    test_schemas.py
