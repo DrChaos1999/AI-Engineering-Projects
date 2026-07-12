@@ -1,0 +1,37 @@
+.env.example
+.gitignore
+Dockerfile
+README.md
+app/
+    __init__.py
+    config.py
+    database.py
+    main.py
+    models.py
+    routers/
+        __init__.py
+        api.py
+    schemas.py
+    seed.py
+    services/
+        __init__.py
+        complaint_orchestrator.py
+        llm_service.py
+        masking.py
+        rules_engine.py
+        transaction_service.py
+        vector_store.py
+    static/
+        app.js
+        styles.css
+    templates/
+        index.html
+data/
+    knowledge_base.json
+docker-compose.yml
+pyproject.toml
+requirements.txt
+tests/
+    test_masking.py
+    test_rules_engine.py
+    test_vector_store.py

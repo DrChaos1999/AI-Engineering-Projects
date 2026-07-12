@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ app_name }}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">N</span><div><strong>NirapodPay</strong><small>Complaint Intelligence</small></div></div>
+    <div class="top-actions">
+      <span class="mode"><i></i>{% if mock_llm %}Local demo mode{% else %}{{ model_name }}{% endif %}</span>
+      <a href="/docs" target="_blank">API Docs ↗</a>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Secure transaction support</span>
+        <h1>Resolve payment complaints with clarity, speed, and control.</h1>
+        <p>Verify the customer, inspect the transaction lifecycle, retrieve the correct procedure, and route unresolved cases to the responsible team.</p>
+        <div class="stats"><div><b>&lt; 5 sec</b><span>Initial triage</span></div><div><b>100%</b><span>Audited cases</span></div><div><b>0</b><span>LLM money actions</span></div></div>
+      </div>
+      <div class="hero-art"><div class="ring ring-a"></div><div class="ring ring-b"></div><div class="shield">✓</div><span class="tag tag-a">Verified lookup</span><span class="tag tag-b">Rule-controlled routing</span><span class="tag tag-c">Structured AI response</span></div>
+    </section>
+
+    <section class="workspace">
+      <nav class="tabs">
+        <button class="tab active" data-panel="assistant">Customer Assistant</button>
+        <button class="tab" data-panel="operations">Operations Queue</button>
+        <button class="tab" data-panel="architecture">How It Works</button>
+      </nav>
+
+      <div id="assistant" class="panel active">
+        <div class="assistant-grid">
+          <aside class="card demo-card">
+            <div class="card-title"><div><span class="kicker">Demo scenarios</span><h2>Try a transaction</h2></div><button id="refresh-demos" class="icon-btn">↻</button></div>
+            <div id="demo-list" class="demo-list"></div>
+            <div class="notice">🔒 <span>The demo uses the sender phone's last four digits. Production requires authenticated sessions and OTP.</span></div>
+          </aside>
+
+          <section class="card chat-card">
+            <header class="chat-head"><span class="avatar">AI</span><div><h2>Transaction Support Assistant</h2><p><i></i> Online · deterministic safety controls</p></div></header>
+            <div id="messages" class="messages"><div class="message bot"><small>Assistant</small><p>Hello. Enter the transaction reference, verify the sender, and describe the issue. Never share a PIN, password, or OTP.</p></div></div>
+            <form id="complaint-form">
+              <div class="form-grid">
+                <label>Reference number<input id="reference" placeholder="MFS202607120004" required></label>
+                <label>Verification code<input id="verification" placeholder="Last 4 digits" required></label>
+              </div>
+              <label>What happened?<textarea id="complaint" rows="3" placeholder="The amount was deducted, but the receiver has not received it." required></textarea></label>
+              <div class="form-actions"><small>Do not enter confidential credentials.</small><button id="submit" type="submit">Analyze complaint →</button></div>
+            </form>
+          </section>
+
+          <aside id="result" class="card result-card"><div class="empty"><span>⌁</span><h3>Case intelligence</h3><p>The verified transaction, diagnosis, routing, and next steps will appear here.</p></div></aside>
+        </div>
+      </div>
+
+      <div id="operations" class="panel">
+        <section class="card queue-card">
+          <div class="queue-head"><div><span class="kicker">Case management</span><h2>Operations Queue</h2><p>Latest cases created by the assistant.</p></div><button id="refresh-cases" class="secondary">Refresh queue</button></div>
+          <div id="metrics" class="metrics"></div>
+          <div class="table-wrap"><table><thead><tr><th>Case</th><th>Reference</th><th>Category</th><th>Priority</th><th>Team</th><th>Status</th><th>Created</th></tr></thead><tbody id="case-body"></tbody></table></div>
+        </section>
+      </div>
+
+      <div id="architecture" class="panel">
+        <section class="card architecture-card">
+          <span class="kicker">Controlled intelligence</span><h2>What happens behind the chat</h2><p>The LLM explains and summarizes; deterministic services control verification, transaction logic, routing, and case creation.</p>
+          <div class="pipeline">
+            <div><b>1</b><strong>Verify</strong><small>Customer identity</small></div><span>→</span>
+            <div><b>2</b><strong>Lookup</strong><small>Transaction record</small></div><span>→</span>
+            <div><b>3</b><strong>Decide</strong><small>Rules engine</small></div><span>→</span>
+            <div><b>4</b><strong>Retrieve</strong><small>Procedure articles</small></div><span>→</span>
+            <div><b>5</b><strong>Explain</strong><small>Structured LLM output</small></div><span>→</span>
+            <div><b>6</b><strong>Route</strong><small>Audited case</small></div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <footer>Demonstration system · No real financial transactions · Never share credentials</footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

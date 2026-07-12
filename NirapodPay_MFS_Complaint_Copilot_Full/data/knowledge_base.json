@@ -1,0 +1,66 @@
+[
+  {
+    "article_id": "KB-PENDING-001",
+    "title": "Pending transfer investigation",
+    "category": "pending_transfer",
+    "symptoms": ["transaction pending", "sender debited", "receiver not credited", "switch timeout", "cross mfs pending"],
+    "resolution": "Do not repeat the transfer. Check the switch message lifecycle, acknowledgement, settlement state, and reversal eligibility.",
+    "routing_keywords": ["switch operations", "interoperability", "settlement"]
+  },
+  {
+    "article_id": "KB-REVERSAL-002",
+    "title": "Failed but debited auto-reversal procedure",
+    "category": "failed_debited",
+    "symptoms": ["failed transaction", "amount deducted", "not reversed", "sender balance reduced"],
+    "resolution": "Review the failure code and reversal ledger. Initiate the approved auto-reversal workflow when eligible and reconcile the sender ledger.",
+    "routing_keywords": ["auto reversal operations", "reconciliation"]
+  },
+  {
+    "article_id": "KB-REVERSED-003",
+    "title": "Confirmed reversal customer guidance",
+    "category": "reversed_transfer",
+    "symptoms": ["reversed", "money returned", "failed and refunded"],
+    "resolution": "Confirm the reversal record and advise the customer to refresh the wallet and inspect the latest statement. Escalate only when the ledger does not reflect the reversal.",
+    "routing_keywords": ["customer support"]
+  },
+  {
+    "article_id": "KB-RECEIVER-004",
+    "title": "Completed transaction but receiver not credited",
+    "category": "receiver_not_credited",
+    "symptoms": ["completed", "receiver not received", "recipient not credited", "missing wallet credit", "cross mfs"],
+    "resolution": "Compare switch completion with the receiver wallet posting and settlement acknowledgement. Do not issue a duplicate credit without reconciliation.",
+    "routing_keywords": ["recipient wallet operations", "interoperability and settlement"]
+  },
+  {
+    "article_id": "KB-FRAUD-005",
+    "title": "Unauthorized transaction first response",
+    "category": "unauthorized_transfer",
+    "symptoms": ["unauthorized", "not my transaction", "fraud", "account hacked", "stolen phone"],
+    "resolution": "Treat as urgent, secure the account through approved controls, preserve evidence, review device and authentication events, and contact the customer through an authenticated channel.",
+    "routing_keywords": ["fraud and risk"]
+  },
+  {
+    "article_id": "KB-WRONG-006",
+    "title": "Wrong-beneficiary dispute",
+    "category": "wrong_receiver",
+    "symptoms": ["wrong number", "wrong receiver", "sent to wrong account"],
+    "resolution": "Open a wrong-beneficiary dispute. Do not promise recovery. Verify authorization and follow the approved dispute process.",
+    "routing_keywords": ["disputes and chargeback"]
+  },
+  {
+    "article_id": "KB-FEE-007",
+    "title": "Fee and amount reconciliation",
+    "category": "fee_or_amount_dispute",
+    "symptoms": ["extra fee", "wrong charge", "incorrect amount", "fee dispute"],
+    "resolution": "Compare the applied fee with the active tariff and reconcile debit, credit, and fee-ledger entries.",
+    "routing_keywords": ["finance reconciliation"]
+  },
+  {
+    "article_id": "KB-GENERAL-008",
+    "title": "Secure complaint handling rules",
+    "category": "general",
+    "symptoms": ["complaint", "transaction reference", "customer support"],
+    "resolution": "Verify the customer before revealing transaction data. Never request a PIN, OTP, password, or secret. Record an audit event for each case.",
+    "routing_keywords": ["customer support", "security"]
+  }
+]
