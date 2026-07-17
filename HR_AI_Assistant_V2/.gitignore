@@ -1,0 +1,1 @@
+﻿.env\ndatabase/*.db\n*.log\n__pycache__/\n*.pyc\n

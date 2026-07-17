@@ -1,0 +1,7 @@
+﻿fastapi
+uvicorn[standard]
+openai
+python-dotenv
+pdfplumber
+pymupdf
+python-multipart

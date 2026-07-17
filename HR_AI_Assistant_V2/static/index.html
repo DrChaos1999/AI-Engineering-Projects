@@ -1,0 +1,223 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HR AI Assistant</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <img src="/assets/trimco_logo.png" alt="Trimco Logo" class="brand-logo" />
+      <h1>HR AI Assistant</h1>
+      <p>Use OpenAI to answer your HR policy questions from uploaded PDF documents.</p>
+      <div class="status-card">
+        <strong>Status:</strong>
+        <span id="status-badge">Ready</span>
+      </div>
+      <div class="info-block">
+        <h2>Quick Tips</h2>
+        <ul>
+          <li>Ask about leave, attendance, benefits, or policies.</li>
+          <li>Admins can upload HR PDFs and refresh the knowledge base.</li>
+          <li>Answers are cached locally for repeat questions.</li>
+        </ul>
+      </div>
+      <div class="info-block">
+        <h2>Documents</h2>
+        <ul id="document-list"></ul>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <section id="login-screen" class="card centered-card">
+        <h2>Login</h2>
+        <label>Username</label>
+        <input id="username" type="text" placeholder="admin or employee" />
+        <label>Password</label>
+        <input id="password" type="password" placeholder="Enter password" />
+        <button id="login-button" class="primary-button">Login</button>
+        <p class="hint">Admin: admin / parvezai<br />Employee: employee / trimco123</p>
+        <div id="login-error" class="error-text"></div>
+      </section>
+
+      <section id="assistant-screen" class="hidden">
+        <div class="top-bar">
+          <div>
+            <h2>HR AI Assistant</h2>
+            <p id="user-role"></p>
+          </div>
+          <button id="logout-button" class="secondary-button">Logout</button>
+        </div>
+
+        <div class="chat-panel">
+          <div id="messages" class="messages"></div>
+          <div class="chat-input-row">
+            <input id="question-input" type="text" placeholder="Ask a question about HR policies..." />
+            <button id="ask-button" class="primary-button">Ask</button>
+          </div>
+          <div class="chat-controls">
+            <button id="clear-button" class="secondary-button">Clear Chat</button>
+          </div>
+        </div>
+
+        <div id="admin-panel" class="card hidden">
+          <h3>Admin Upload</h3>
+          <p>Upload a new HR policy PDF to refresh the knowledge base.</p>
+          <input id="upload-file" type="file" accept="application/pdf" />
+          <button id="upload-button" class="primary-button">Upload PDF</button>
+          <div id="upload-status" class="info-text"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const credentials = {
+      admin: { username: 'admin', password: 'parvezai', role: 'Administrator' },
+      employee: { username: 'employee', password: 'trimco123', role: 'Employee' },
+    };
+
+    const loginScreen = document.getElementById('login-screen');
+    const assistantScreen = document.getElementById('assistant-screen');
+    const loginError = document.getElementById('login-error');
+    const userRoleLabel = document.getElementById('user-role');
+    const uploadPanel = document.getElementById('admin-panel');
+    const documentList = document.getElementById('document-list');
+    const statusBadge = document.getElementById('status-badge');
+    const messagesContainer = document.getElementById('messages');
+
+    let currentRole = null;
+    let currentUsername = null;
+    let chatHistory = [];
+
+    async function loadDocuments() {
+      try {
+        const response = await fetch('/api/docs');
+        const data = await response.json();
+        documentList.innerHTML = data.documents.map(doc => `<li>${doc}</li>`).join('');
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    function setStatus(text, isError = false) {
+      statusBadge.textContent = text;
+      statusBadge.className = isError ? 'status-badge error' : 'status-badge';
+    }
+
+    function addMessage(role, message) {
+      const bubble = document.createElement('div');
+      bubble.className = `chat-message ${role}`;
+      bubble.innerHTML = `<strong>${role === 'user' ? 'You' : 'Assistant'}:</strong><p>${message}</p>`;
+      messagesContainer.appendChild(bubble);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function clearChat() {
+      chatHistory = [];
+      messagesContainer.innerHTML = '';
+    }
+
+    async function askQuestion() {
+      const input = document.getElementById('question-input');
+      const question = input.value.trim();
+      if (!question) return;
+      addMessage('user', question);
+      input.value = '';
+      setStatus('Thinking...');
+
+      try {
+        const response = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          addMessage('assistant', data.answer);
+          setStatus(data.cached ? 'Answer loaded from cache' : 'Answer generated by OpenAI');
+        } else {
+          addMessage('assistant', data.detail || 'Unable to get a response.');
+          setStatus('Error', true);
+        }
+      } catch (error) {
+        console.error(error);
+        addMessage('assistant', '⚠️ Unable to contact the AI service.');
+        setStatus('Error', true);
+      }
+    }
+
+    async function uploadPdf() {
+      const fileInput = document.getElementById('upload-file');
+      const status = document.getElementById('upload-status');
+      if (!fileInput.files.length) {
+        status.textContent = 'Please select a PDF file to upload.';
+        return;
+      }
+      const file = fileInput.files[0];
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        status.textContent = 'Only PDF files are supported.';
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      status.textContent = 'Uploading...';
+
+      try {
+        const response = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await response.json();
+        if (response.ok) {
+          status.textContent = data.message;
+          loadDocuments();
+        } else {
+          status.textContent = data.detail || 'Upload failed.';
+        }
+      } catch (error) {
+        console.error(error);
+        status.textContent = 'Upload failed. Please try again.';
+      }
+    }
+
+    document.getElementById('login-button').addEventListener('click', () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const user = Object.values(credentials).find((item) => item.username === username && item.password === password);
+      if (!user) {
+        loginError.textContent = 'Invalid username or password.';
+        return;
+      }
+      loginError.textContent = '';
+      currentRole = user.role;
+      currentUsername = user.username;
+      userRoleLabel.textContent = `${currentUsername} • ${currentRole}`;
+      loginScreen.classList.add('hidden');
+      assistantScreen.classList.remove('hidden');
+      uploadPanel.classList.toggle('hidden', currentRole !== 'Administrator');
+      loadDocuments();
+    });
+
+    document.getElementById('logout-button').addEventListener('click', () => {
+      currentRole = null;
+      currentUsername = null;
+      loginScreen.classList.remove('hidden');
+      assistantScreen.classList.add('hidden');
+      clearChat();
+      setStatus('Ready');
+    });
+
+    document.getElementById('ask-button').addEventListener('click', askQuestion);
+    document.getElementById('question-input').addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') askQuestion();
+    });
+    document.getElementById('clear-button').addEventListener('click', clearChat);
+    document.getElementById('upload-button').addEventListener('click', uploadPdf);
+
+    window.addEventListener('load', () => {
+      loadDocuments();
+    });
+  </script>
+</body>
+</html>
