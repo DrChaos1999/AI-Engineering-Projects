@@ -1,1 +1,7 @@
-﻿.env\ndatabase/*.db\n*.log\n__pycache__/\n*.pyc\n
+﻿.env
+database
+.db
+.log
+__pycache__
+.pyc
+.env
