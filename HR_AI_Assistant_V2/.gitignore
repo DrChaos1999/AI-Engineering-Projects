@@ -1,7 +1,8 @@
-﻿.env
-database
-.db
-.log
-__pycache__
-.pyc
+# Ignore environment files with secrets
+HR_AI_Assistant_V2/.env
 .env
+
+# Ignore any backup or config files with keys
+*.key
+*.pem
+*.secret
