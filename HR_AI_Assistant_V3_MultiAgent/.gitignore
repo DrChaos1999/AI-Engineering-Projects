@@ -1,0 +1,10 @@
+.env
+*.key
+*.pem
+*.secret
+__pycache__/
+.pytest_cache/
+.venv/
+database/*.db
+database/*.db-*
+app.log

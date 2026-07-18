@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HR Multi-Agent Assistant</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">MCP · LangChain · CrewAI</p>
+        <h1>HR Multi-Agent Assistant</h1>
+        <p class="muted">OpenAI, Anthropic, and DeepSeek independently answer from the same policy evidence; a judge agent selects the final grounded answer.</p>
+      </div>
+      <div id="provider-list" class="provider-list" aria-label="Configured providers"></div>
+    </header>
+
+    <section class="panel session-panel">
+      <div>
+        <h2>Customer session</h2>
+        <p id="session-message" class="muted">Start a session before asking a question.</p>
+      </div>
+      <div class="session-controls">
+        <input id="access-code" type="password" autocomplete="off" placeholder="Customer access code">
+        <button id="start-session" type="button">Start session</button>
+      </div>
+      <div class="session-stats">
+        <div><span>Time left</span><strong id="time-left">--:--</strong></div>
+        <div><span>Questions</span><strong id="question-limit">--</strong></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <form id="ask-form">
+        <label for="question">Employee question</label>
+        <textarea id="question" required disabled placeholder="What is the annual leave entitlement after one year of service?"></textarea>
+        <button id="ask-button" type="submit" disabled>Ask the model panel</button>
+      </form>
+    </section>
+
+    <section id="result-card" class="panel result-card hidden" aria-live="polite">
+      <div class="result-heading">
+        <h2>Final answer</h2>
+        <span id="cache-badge" class="badge hidden">Cached</span>
+      </div>
+      <div id="result" class="answer"></div>
+      <div id="judge-info" class="muted small"></div>
+      <details id="source-details" class="hidden">
+        <summary>Sources and model panel</summary>
+        <div id="sources"></div>
+        <div id="candidates"></div>
+      </details>
+    </section>
+
+    <details class="panel admin-panel">
+      <summary>Administrator: upload a policy PDF</summary>
+      <form id="upload-form">
+        <input id="admin-token" type="password" autocomplete="off" placeholder="Admin upload token">
+        <input id="file" type="file" accept="application/pdf" required>
+        <button type="submit">Upload and re-index</button>
+      </form>
+      <p id="upload-status" class="muted"></p>
+    </details>
+  </main>
+
+<script>
+const state = { config: null, session: null, timer: null };
+const byId = (id) => document.getElementById(id);
+
+function formatTime(seconds) {
+  const safe = Math.max(0, Number(seconds || 0));
+  const minutes = Math.floor(safe / 60).toString().padStart(2, '0');
+  const remainder = Math.floor(safe % 60).toString().padStart(2, '0');
+  return `${minutes}:${remainder}`;
+}
+
+function renderProviders() {
+  const container = byId('provider-list');
+  container.replaceChildren();
+  const providers = state.config?.providers || [];
+  if (!providers.length) {
+    const item = document.createElement('span');
+    item.className = 'provider offline';
+    item.textContent = 'No API keys configured';
+    container.appendChild(item);
+    return;
+  }
+  providers.forEach((provider) => {
+    const item = document.createElement('span');
+    item.className = 'provider';
+    item.textContent = provider;
+    container.appendChild(item);
+  });
+}
+
+function renderSession() {
+  const session = state.session;
+  const active = Boolean(session?.active && session.remaining_seconds > 0);
+  byId('question').disabled = !active;
+  byId('ask-button').disabled = !active;
+  byId('time-left').textContent = session ? formatTime(session.remaining_seconds) : '--:--';
+
+  if (!session) {
+    byId('question-limit').textContent = '--';
+    byId('session-message').textContent = 'Start a session before asking a question.';
+    return;
+  }
+
+  byId('question-limit').textContent = session.max_questions === 0
+    ? `${session.question_count} / unlimited`
+    : `${session.question_count} / ${session.max_questions}`;
+
+  if (!active) {
+    byId('session-message').textContent = session.remaining_seconds <= 0
+      ? 'This customer session has expired.'
+      : 'This customer session has reached its question limit.';
+  } else {
+    byId('session-message').textContent = 'Session active. The limit is enforced by the server.';
+  }
+}
+
+function startCountdown() {
+  if (state.timer) clearInterval(state.timer);
+  state.timer = setInterval(() => {
+    if (!state.session) return;
+    state.session.remaining_seconds = Math.max(0, state.session.remaining_seconds - 1);
+    if (state.session.remaining_seconds === 0) state.session.active = false;
+    renderSession();
+  }, 1000);
+}
+
+async function loadConfig() {
+  const response = await fetch('/api/config');
+  state.config = await response.json();
+  renderProviders();
+  const codeInput = byId('access-code');
+  if (!state.config.require_access_code) {
+    codeInput.placeholder = 'Access code (optional)';
+  }
+}
+
+async function startSession() {
+  const button = byId('start-session');
+  button.disabled = true;
+  byId('session-message').textContent = 'Starting session…';
+  try {
+    const response = await fetch('/api/session/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({access_code: byId('access-code').value || null})
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Session could not be started.');
+    state.session = data.session;
+    renderSession();
+    startCountdown();
+  } catch (error) {
+    byId('session-message').textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function renderSources(sources) {
+  const container = byId('sources');
+  container.replaceChildren();
+  const heading = document.createElement('h3');
+  heading.textContent = 'Retrieved passages';
+  container.appendChild(heading);
+  const list = document.createElement('ul');
+  (sources || []).forEach((source) => {
+    const item = document.createElement('li');
+    item.textContent = `${source.document}, page ${source.page} · score ${source.score}`;
+    list.appendChild(item);
+  });
+  container.appendChild(list);
+}
+
+function renderCandidates(candidates) {
+  const container = byId('candidates');
+  container.replaceChildren();
+  const heading = document.createElement('h3');
+  heading.textContent = 'Candidate agents';
+  container.appendChild(heading);
+  (candidates || []).forEach((candidate) => {
+    const box = document.createElement('div');
+    box.className = 'candidate';
+    const title = document.createElement('strong');
+    title.textContent = `${candidate.provider} / ${candidate.model}`;
+    const body = document.createElement('p');
+    body.textContent = candidate.error ? `Failed: ${candidate.error}` : candidate.answer;
+    box.append(title, body);
+    container.appendChild(box);
+  });
+}
+
+byId('start-session').addEventListener('click', startSession);
+
+byId('ask-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const button = byId('ask-button');
+  const resultCard = byId('result-card');
+  const result = byId('result');
+  button.disabled = true;
+  resultCard.classList.remove('hidden');
+  result.textContent = 'Retrieving policy evidence through MCP and running the model panel…';
+  byId('source-details').classList.add('hidden');
+  byId('cache-badge').classList.add('hidden');
+
+  try {
+    const response = await fetch('/api/ask', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question: byId('question').value})
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Request failed.');
+
+    state.session = data.session;
+    renderSession();
+    result.textContent = data.answer;
+    byId('judge-info').textContent = `Judge: ${data.judge_provider || 'cached'} / ${data.judge_model || 'previous result'} · retrieval: ${data.retrieval_mode || 'cached'}`;
+    byId('cache-badge').classList.toggle('hidden', !data.cached);
+    renderSources(data.sources);
+    renderCandidates(data.candidates);
+    byId('source-details').classList.remove('hidden');
+  } catch (error) {
+    result.textContent = error.message;
+    try {
+      const statusResponse = await fetch('/api/session/status');
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        state.session = statusData.session;
+        renderSession();
+      }
+    } catch (_) {}
+  } finally {
+    if (state.session?.active) button.disabled = false;
+  }
+});
+
+byId('upload-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const status = byId('upload-status');
+  const file = byId('file').files[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append('file', file);
+  status.textContent = 'Uploading and rebuilding the knowledge cache…';
+  const headers = {};
+  const token = byId('admin-token').value;
+  if (token) headers['X-Admin-Token'] = token;
+  try {
+    const response = await fetch('/api/upload', {method: 'POST', headers, body: form});
+    const data = await response.json();
+    status.textContent = response.ok ? data.message : (data.detail || 'Upload failed.');
+  } catch (error) {
+    status.textContent = error.message;
+  }
+});
+
+(async function init() {
+  await loadConfig();
+  try {
+    const response = await fetch('/api/session/status');
+    if (response.ok) {
+      const data = await response.json();
+      state.session = data.session;
+      renderSession();
+      startCountdown();
+    }
+  } catch (_) {}
+})();
+</script>
+</body>
+</html>
